@@ -15,11 +15,11 @@ namespace notes_firebase.Controllers
         {
             this._notesService = notesService;
         }
-        //[HttpGet]
-        //public async Task<Note> GetNotes()
-        //{
-
-        //}
+        [HttpGet]
+        public async Task<List<Note>> GetNotes()
+        {
+            return await _notesService.GetNotes();
+        }
         [HttpPost]
         public async Task<Note> AddNote(Note note)
         {

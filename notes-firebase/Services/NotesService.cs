@@ -11,18 +11,31 @@ namespace notes_firebase.Services
         static string firebaseDatabaseDocument = "Notes";
         static readonly HttpClient client = new HttpClient();
 
-        public async Task<Note> GetNotes()
+        public async Task<List<Note>> GetNotes()
         {
-
+            string url = $"{firebaseDatabaseUrl}" +
+                       $"{firebaseDatabaseDocument}.json";
+            var response = await client.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if(content != null || content != "null") {
+                    return JsonSerializer.Deserialize<Dictionary<string,Note>>(content)
+                        .Select(x => x.Value)
+                        .Where(x => x.IsDeleted.Equals(false)).ToList();
+                }
+            }
+            return null;
         }
         public  async Task<Note> Add([FromBody] Note note)
         {
-            note.NoteId = Guid.NewGuid();
+            note.Id = Guid.NewGuid();
+            note.IsDeleted = false;
             string noteJsonString = JsonSerializer.Serialize(note);
             var payload = new StringContent(noteJsonString, Encoding.UTF8, "application/json");
             string url = $"{firebaseDatabaseUrl}" +
                         $"{firebaseDatabaseDocument}/" +
-                        $"{note.NoteId}.json";
+                        $"{note.Id}.json";
             var httpResponse = await client.PutAsync(url, payload);
             if (httpResponse.IsSuccessStatusCode)
             {
