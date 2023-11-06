@@ -20,10 +20,16 @@ namespace notes_firebase.Controllers
         {
             return await _notesService.GetNotes();
         }
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<Note> GetNoteById(string id)
+        {
+            return await _notesService.GetNoteById(id);
+        }
         [HttpPost]
         public async Task<Note> AddNote(Note note)
         {
-            return await _notesService.Add(note);
+            return await _notesService.AddNote(note);
         }
     }
 }

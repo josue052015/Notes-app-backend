@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using notes_firebase.Models;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 
@@ -27,7 +28,24 @@ namespace notes_firebase.Services
             }
             return null;
         }
-        public  async Task<Note> Add([FromBody] Note note)
+        public async Task<Note> GetNoteById(string id)
+        {
+            string url = $"{firebaseDatabaseUrl}" +
+                       $"{firebaseDatabaseDocument}/" + 
+                       $"{id}.json";
+
+            var response = await client.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (content != null || content != "null")
+                {
+                    return JsonSerializer.Deserialize<Note>(content);  
+                }
+            }
+            return null;
+        }
+        public  async Task<Note> AddNote([FromBody] Note note)
         {
             note.Id = Guid.NewGuid();
             note.IsDeleted = false;
@@ -43,6 +61,37 @@ namespace notes_firebase.Services
                 return JsonSerializer.Deserialize<Note>(content);
             }
             return null;
+        }
+        public async Task<Note> EditNote([FromBody] Note note)
+        {
+            string noteJsonString = JsonSerializer.Serialize(note);
+            var payload = new StringContent(noteJsonString, Encoding.UTF8, "application/json");
+            string url = $"{firebaseDatabaseUrl}" +
+                        $"{firebaseDatabaseDocument}/" +
+                        $"{note.Id}.json";
+            var httpResponse = await client.PutAsync(url, payload);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<Note>(content);
+            }
+            return null;
+        }
+        public async Task<Note> MoveToRecycleBin(string id)
+        {
+            var note = await GetNoteById(id);
+            note.IsDeleted = true;
+            return await EditNote(note);   
+        } 
+
+        public async Task<string> DeleteNote(string id)
+        {
+            string url = $"{firebaseDatabaseUrl}" +
+                     $"{firebaseDatabaseDocument}/" +
+                     $"{id}.json";
+            var httpResponse = await client.DeleteAsync(url);
+
+            return await httpResponse.Content.ReadAsStringAsync();
         }
     }
 }
