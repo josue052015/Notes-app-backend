@@ -1,10 +1,9 @@
-﻿namespace notes_firebase.Models
+﻿namespace notes_firebase.DTOs
 {
-    public class User:BaseModel
+    public class UserDTO: BaseDTO
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
     }
 }

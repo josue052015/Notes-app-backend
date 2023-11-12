@@ -45,7 +45,24 @@ namespace notes_firebase.Services
             }
             return null;
         }
-        public  async Task<Note> AddNote([FromBody] Note note)
+        public async Task<List<Note>> GetRecicleBin()
+        {
+            string url = $"{firebaseDatabaseUrl}" +
+                       $"{firebaseDatabaseDocument}.json";
+            var response = await client.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (content != null || content != "null")
+                {
+                    return JsonSerializer.Deserialize<Dictionary<string, Note>>(content)
+                        .Select(x => x.Value)
+                        .Where(x => x.IsDeleted.Equals(true)).ToList();
+                }
+            }
+            return null;
+        }
+        public  async Task<Note> AddNote(Note note)
         {
             note.Id = Guid.NewGuid();
             note.IsDeleted = false;
@@ -62,7 +79,7 @@ namespace notes_firebase.Services
             }
             return null;
         }
-        public async Task<Note> EditNote([FromBody] Note note)
+        public async Task<Note> EditNote(Note note)
         {
             string noteJsonString = JsonSerializer.Serialize(note);
             var payload = new StringContent(noteJsonString, Encoding.UTF8, "application/json");
