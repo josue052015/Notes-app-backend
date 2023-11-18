@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using notes_firebase.Models;
 using notes_firebase.Services;
@@ -7,6 +8,7 @@ namespace notes_firebase.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public  class NotesController : ControllerBase
     {
         private readonly NotesService _notesService;
