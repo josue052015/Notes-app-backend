@@ -26,7 +26,8 @@ namespace notes_firebase.Controllers
         [HttpPost]
         public async Task<IActionResult> Auth([FromBody] UserLogin userLogin)
         {
-            if(await _authService.UserExist(userLogin.Email, userLogin.Password))
+            var user = await _authService.FindUser(userLogin.Email, userLogin.Password);
+            if (user is not null)
             {
                 var issuer = configuration["JWT:Issuer"];
                 var audience = configuration["JWT:Audience"];
@@ -39,7 +40,8 @@ namespace notes_firebase.Controllers
                 {
                 new Claim(JwtRegisteredClaimNames.Sub, userLogin.Email),
                 new Claim(JwtRegisteredClaimNames.Email, userLogin.Email),
-            });
+                new Claim(ClaimTypes.NameIdentifier, user),
+              });
                 var expires = DateTime.UtcNow.AddDays(1);
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {

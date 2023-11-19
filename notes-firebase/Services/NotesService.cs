@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Firebase.Database;
+using Firebase.Database.Query;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using notes_firebase.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -12,20 +17,24 @@ namespace notes_firebase.Services
         static string firebaseDatabaseDocument = "Notes";
         static readonly HttpClient client = new HttpClient();
 
-        public async Task<List<Note>> GetNotes()
+        public async Task<List<Note>> GetNotes(HttpContext httpContext)
         {
-            string url = $"{firebaseDatabaseUrl}" +
-                       $"{firebaseDatabaseDocument}.json";
-            var response = await client.GetAsync(url);
-            if (response.IsSuccessStatusCode)
+            string jwtToken = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", string.Empty);
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
+
+            if (jsonToken != null && jwtToken != null)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                if(content != null || content != "null") {
-                    return JsonSerializer.Deserialize<Dictionary<string,Note>>(content)
-                        .Select(x => x.Value)
-                        .Where(x => x.IsDeleted.Equals(false)).ToList();
-                }
+               
+                var userIdClaim = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "nameid");
+                var firebase = new FirebaseClient(firebaseDatabaseUrl);
+                var noteDictionary = await firebase.Child(firebaseDatabaseDocument)
+                                   .OrderBy("UserId")
+                                   .EqualTo(userIdClaim.Value.ToString())
+                                   .OnceSingleAsync<Dictionary<string, Note>>();
+                return noteDictionary.Values.ToList();
             }
+           
             return null;
         }
         public async Task<Note> GetNoteById(string id)

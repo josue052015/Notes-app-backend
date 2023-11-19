@@ -20,7 +20,7 @@ namespace notes_firebase.Controllers
         [HttpGet]
         public async Task<List<Note>> GetNotes()
         {
-            return await _notesService.GetNotes();
+            return await _notesService.GetNotes(HttpContext);
         }
         [HttpGet]
         [Route("GetRecicleBin")]
