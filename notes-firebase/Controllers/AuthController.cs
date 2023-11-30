@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +13,7 @@ namespace notes_firebase.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration configuration;
@@ -29,32 +31,39 @@ namespace notes_firebase.Controllers
             var user = await _authService.FindUser(userLogin.Email, userLogin.Password);
             if (user is not null)
             {
-                var issuer = configuration["JWT:Issuer"];
-                var audience = configuration["JWT:Audience"];
-                var key = Encoding.UTF8.GetBytes(configuration["Jwt:Key"]);
-                var signingCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha512Signature
-                    );
-                var subject = new ClaimsIdentity(new[]
+                try
                 {
+                    var issuer = configuration["JWT:Issuer"];
+                    var audience = configuration["JWT:Audience"];
+                    var key = Encoding.UTF8.GetBytes(configuration["Jwt:Key"]);
+                    var signingCredentials = new SigningCredentials(
+                        new SymmetricSecurityKey(key),
+                        SecurityAlgorithms.HmacSha512Signature
+                        );
+                    var subject = new ClaimsIdentity(new[]
+                    {
                 new Claim(JwtRegisteredClaimNames.Sub, userLogin.Email),
                 new Claim(JwtRegisteredClaimNames.Email, userLogin.Email),
                 new Claim(ClaimTypes.NameIdentifier, user),
               });
-                var expires = DateTime.UtcNow.AddDays(1);
-                var tokenDescriptor = new SecurityTokenDescriptor
+                    var expires = DateTime.UtcNow.AddDays(1);
+                    var tokenDescriptor = new SecurityTokenDescriptor
+                    {
+                        Subject = subject,
+                        Expires = expires,
+                        Issuer = issuer,
+                        Audience = audience,
+                        SigningCredentials = signingCredentials
+                    };
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var token = tokenHandler.CreateToken(tokenDescriptor);
+                    var jtwToken = tokenHandler.WriteToken(token);
+                    return Ok(jtwToken);
+                }
+                catch (Exception ex)
                 {
-                    Subject = subject,
-                    Expires = expires,
-                    Issuer = issuer,
-                    Audience = audience,
-                    SigningCredentials = signingCredentials
-                };
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                var jtwToken = tokenHandler.WriteToken(token);
-                return Ok(jtwToken);
+
+                }
             }
           return Unauthorized();
         }

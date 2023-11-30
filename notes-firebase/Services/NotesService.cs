@@ -75,6 +75,7 @@ namespace notes_firebase.Services
         {
             note.Id = Guid.NewGuid();
             note.IsDeleted = false;
+            note.DateModified = DateTime.UtcNow;
             string noteJsonString = JsonSerializer.Serialize(note);
             var payload = new StringContent(noteJsonString, Encoding.UTF8, "application/json");
             string url = $"{firebaseDatabaseUrl}" +
