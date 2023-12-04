@@ -10,6 +10,8 @@ namespace notes_firebase.Configurations
         {
             CreateMap<User, UserDTO>();
             CreateMap<UserDTO, User>();
+            CreateMap<UserAuthDTO, User>();
+            CreateMap<User, UserAuthDTO>();
         }
     }
 }

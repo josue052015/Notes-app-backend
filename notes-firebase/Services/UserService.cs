@@ -12,10 +12,12 @@ namespace notes_firebase.Services
         static string firebaseDatabaseDocument = "User";
         static readonly HttpClient client = new HttpClient();
         private readonly IMapper _mapper;
+        private readonly AuthService _authService;
 
-        public UserService(IMapper mapper)
+        public UserService(IMapper mapper, AuthService authService)
         {
             this._mapper = mapper;
+            this._authService = authService;
         }
         public async Task<User> GetUserFromDB(string id)
         {
@@ -40,7 +42,7 @@ namespace notes_firebase.Services
             var user = await GetUserFromDB(id);
             return _mapper.Map<UserDTO>(user);
         }
-        public async Task<UserDTO> AddUser(User user)
+        public async Task<UserAuthDTO> AddUser(User user)
         {
             user.Id = Guid.NewGuid();
             user.IsDeleted = false;
@@ -53,7 +55,11 @@ namespace notes_firebase.Services
             if (httpResponse.IsSuccessStatusCode)
             {
                 var content = await httpResponse.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<UserDTO>(content);
+             //   return JsonSerializer.Deserialize<UserDTO>(content);
+               var userLogin = JsonSerializer.Deserialize<UserLogin>(content);
+                var response = _mapper.Map<UserAuthDTO>(user);
+                response.Token = _authService.GenerateToken(userLogin, user.Id.ToString());
+                return response;
             }
             return null;
         }

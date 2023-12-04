@@ -26,7 +26,7 @@ namespace notes_firebase.Controllers
             return await _userService.GetUserById(id);
         }
         [HttpPost]
-        public async Task<UserDTO> AddUser([FromBody] User user)
+        public async Task<UserAuthDTO> AddUser([FromBody] User user)
         {
             return await _userService.AddUser(user);
         }
